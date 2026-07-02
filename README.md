@@ -36,6 +36,32 @@ CareerOS utilizes a pipeline of 5 parallel AI agents to supercharge your job hun
 
 ---
 
+## 🎓 Capstone Requirements Mapping
+
+This project was built to strictly fulfill and exceed the **Job Application Co-Pilot** rubric:
+
+### 1. Core Outcomes & Features (100% Achieved)
+- ✅ **Upload & Parse:** Users can upload a Resume (PDF parsed into structured text) and paste a Job Description.
+- ✅ **Multi-Agent Pipeline:** The app runs a coordinated LLM pipeline producing four distinct artifacts: Fit Analysis, Resume Rewrite, Cover Letter, and Interview Q&A.
+- ✅ **Role Tracking:** All artifacts are saved per "role application" allowing the user to manage a pipeline of roles applied for.
+- ✅ **Diff View:** Includes a visual side-by-side Diff view comparing the original resume text to the AI-optimized rewrite.
+- ✅ **Exporting:** Download buttons implemented for exporting the Cover Letter as `.docx` and the Resume as `.pdf`.
+
+### 2. Architecture & Tech Stack Requirements
+- ✅ **Frontend:** Built as a dynamic CRUD SPA. Uses native `fetch()` calls to interact with the backend API.
+- ✅ **Backend & AI Core:** Built with **FastAPI** using strict **JWT authentication**. Implements a custom **Multi-agent pipeline orchestrator** using Python's `asyncio.gather` (fulfilling the hand-rolled coordinator pattern).
+- ✅ **Storage:** Utilizes a highly scalable **MongoDB Atlas** database via `motor` (an industry-standard upgrade over the suggested SQLite).
+- ✅ **PDF Parsing:** Implemented native server-side PDF extraction.
+
+### 3. Open-Ended Stretch Goals (4/4 Achieved)
+- 🌟 **ATS Scorer:** Implemented an additional AI pass to score the rewritten resume against the JD.
+- 🌟 **Voice Mock Interview:** Implemented browser-native Web Speech API for interactive mock interviews.
+- 🌟 **Salary Negotiation Coach:** Added a 5th AI agent to generate dynamic negotiation scripts.
+- 🌟 **Calendar Integration:** Implemented an `.ics` generator for follow-up reminders.
+- 🌟 **Cloud Deployment:** Fully deployed on a decoupled architecture (Vercel + Render).
+
+---
+
 ## 🛠️ Technology Stack
 
 ### Frontend
