@@ -34,6 +34,13 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# ---------------- Analytics ----------------
+import posthog
+POSTHOG_API_KEY = os.environ.get("POSTHOG_API_KEY")
+if POSTHOG_API_KEY:
+    posthog.project_api_key = POSTHOG_API_KEY
+    posthog.host = os.environ.get("POSTHOG_HOST", "https://us.i.posthog.com")
+
 app = FastAPI(title="CareerOS API")
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -348,7 +355,18 @@ async def _fetch_owned_app(app_id: str, user: dict) -> dict:
 @api_router.post("/applications/{app_id}/run")
 @limiter.limit("10/hour")
 async def run_pipeline(request: Request, app_id: str, user: dict = Depends(current_user)):
-    await _check_daily_ai_quota(user["id"])
+    user_doc = await db.users.find_one({"_id": ObjectId(user["id"])})
+    credits = user_doc.get("credits")
+    if credits is None:
+        credits = 3
+        await db.users.update_one({"_id": ObjectId(user["id"])}, {"$set": {"credits": 3}})
+        
+    if credits < 1:
+        raise HTTPException(
+            status_code=402, 
+            detail="Insufficient credits. Please purchase more credits to run the AI pipeline."
+        )
+        
     doc = await _fetch_owned_app(app_id, user)
     try:
         results = await llm_agents.run_full_pipeline(
@@ -357,12 +375,26 @@ async def run_pipeline(request: Request, app_id: str, user: dict = Depends(curre
     except Exception as e:
         logger.exception("Pipeline failed")
         raise HTTPException(status_code=500, detail=f"AI generation failed: {e}")
+        
+    # Deduct 1 credit
+    await db.users.update_one({"_id": ObjectId(user["id"])}, {"$inc": {"credits": -1}})
     now = datetime.now(timezone.utc).isoformat()
     await db.applications.update_one(
         {"_id": ObjectId(app_id)},
         {"$set": {"results": results, "generated": True, "updated_at": now}},
     )
     updated = await db.applications.find_one({"_id": ObjectId(app_id)})
+    
+    if POSTHOG_API_KEY:
+        posthog.capture(
+            user["id"],
+            'ai_pipeline_run',
+            {
+                'application_id': app_id,
+                'match_rate': results.get("fit_analysis", {}).get("match_rate")
+            }
+        )
+        
     return serialize_app(updated)
 
 
@@ -590,6 +622,12 @@ async def root():
 
 
 app.include_router(api_router)
+
+from stripe_router import stripe_router
+app.include_router(stripe_router)
+
+from voice_router import voice_router
+app.include_router(voice_router)
 
 app.add_middleware(
     CORSMiddleware,
