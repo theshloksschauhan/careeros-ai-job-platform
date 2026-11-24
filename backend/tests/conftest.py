@@ -51,7 +51,8 @@ def mock_llm(monkeypatch):
     monkeypatch.setattr("llm_agents._run", fake_run)
 
 
-@pytest.fixture
+# One app client per session: the Motor (Mongo) client binds to the first event loop.
+@pytest.fixture(scope="session")
 def client():
     from starlette.testclient import TestClient
     from server import app
