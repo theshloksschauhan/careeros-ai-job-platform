@@ -372,6 +372,12 @@ async def run_pipeline(request: Request, app_id: str, user: dict = Depends(curre
         results = await llm_agents.run_full_pipeline(
             doc["resume_text"], doc["job_description"], doc["company"], doc["job_title"], app_id
         )
+    except llm_agents.LLMUnavailableError:
+        logger.exception("Pipeline failed: LLM unavailable")
+        raise HTTPException(status_code=503, detail="The AI service is unavailable right now. No credits were used; please try again.")
+    except llm_agents.LLMOutputError:
+        logger.exception("Pipeline failed: invalid LLM output")
+        raise HTTPException(status_code=502, detail="The AI returned an invalid response twice. No credits were used; please try again.")
     except Exception as e:
         logger.exception("Pipeline failed")
         raise HTTPException(status_code=500, detail=f"AI generation failed: {e}")
@@ -411,6 +417,12 @@ async def regenerate_agent(request: Request, app_id: str, agent: str, user: dict
             doc["resume_text"], doc["job_description"], doc["company"], doc["job_title"], app_id,
             fit_context=fit_context,
         )
+    except llm_agents.LLMUnavailableError:
+        logger.exception("Regeneration failed: LLM unavailable")
+        raise HTTPException(status_code=503, detail="The AI service is unavailable right now. No credits were used; please try again.")
+    except llm_agents.LLMOutputError:
+        logger.exception("Regeneration failed: invalid LLM output")
+        raise HTTPException(status_code=502, detail="The AI returned an invalid response twice. No credits were used; please try again.")
     except Exception as e:
         logger.exception("Regeneration failed")
         raise HTTPException(status_code=500, detail=f"AI generation failed: {e}")

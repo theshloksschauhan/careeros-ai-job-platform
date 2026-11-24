@@ -131,6 +131,7 @@ export default function ApplicationDetail() {
 
   const results = appData.results || {};
   const generated = appData.generated;
+  const isDemoOutput = Object.values(results).some((r) => r && r.demo_mode);
 
   return (
     <div className="mx-auto max-w-6xl px-8 py-8" data-testid="application-detail">
@@ -219,6 +220,16 @@ export default function ApplicationDetail() {
       )}
 
       {running && <GenerationProgress />}
+
+      {generated && !running && isDemoOutput && (
+        <div
+          role="status"
+          data-testid="demo-mode-banner"
+          className="mb-6 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+        >
+          Demo mode: the AI service was unavailable, so these results are sample output, not an analysis of your resume.
+        </div>
+      )}
 
       {/* Results tabs */}
       {generated && !running && (

@@ -18,8 +18,7 @@
 ---
 
 ## 🌟 Live Demo
-* **Live Web App:** <paste deployed frontend URL here>
-* **Backend API:** <paste deployed backend URL here>
+* **Live Web App:** https://capstone-project-36y1.vercel.app/
 
 ---
 
@@ -148,7 +147,12 @@ yarn start
 | `COOKIE_SECURE` | backend | `true` in production HTTPS |
 | `ADMIN_EMAIL` | backend | Initial admin email |
 | `ADMIN_PASSWORD` | backend | Initial admin password or generated fallback |
+| `DEMO_MODE` | backend | `true` serves labelled sample output when the LLM is unreachable (default `false`) |
 | `REACT_APP_BACKEND_URL` | frontend | Backend base URL |
+
+### LLM output validation
+
+Every agent reply is parsed and validated against a Pydantic schema (`backend/agent_schemas.py`): unknown keys are dropped, missing fields get safe defaults, and scores are clamped to 0-100. If a reply is not valid JSON or breaks the schema, the agent retries once with a correction prompt; a second failure returns HTTP 502. If the LLM provider is unreachable the API returns HTTP 503 and no credit is used. Sample output is served only when `DEMO_MODE=true`, and the UI labels it with a banner.
 
 ---
 
